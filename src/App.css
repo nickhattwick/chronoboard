@@ -1,0 +1,192 @@
+/* Ensure no horizontal scrolling */
+html, body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
+}
+
+#root {
+  max-width: 100vw;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Center board by default */
+.task-board-container {
+  display: flex;
+  justify-content: center; /* Center everything by default */
+  align-items: flex-start;
+  width: 100vw;
+  height: 100vh;
+  transition: transform 0.3s ease-in-out;
+  position: relative;
+}
+
+/* Task Board */
+.task-board {
+  flex: 1; /* Allow dynamic resizing */
+  padding: 20px;
+  max-width: 900px; /* Prevents excessive stretching */
+  min-width: 600px;
+  transition: margin-right 0.3s ease-in-out;
+}
+
+/* When details panel is open, reserve space for it */
+.task-board-container.with-details .task-board {
+  margin-right: 35%;
+}
+
+/* Task Details Panel */
+.task-details {
+  position: fixed;
+  right: -35%; /* Hidden by default */
+  top: 0;
+  width: 33%;
+  height: 100vh;
+  background: #f8f9fa;
+  padding: 15px;
+  border-left: 2px solid #ddd;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease-in-out;
+}
+
+/* When panel is open, slide it in */
+.task-details.open {
+  right: 0;
+}
+
+/* Board Layout */
+.board {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+  padding: 20px;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Columns */
+.column {
+  background: #f8f9fa;
+  padding: 15px;
+  width: 30%;
+  min-height: 300px;
+  border-radius: 10px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Task Cards */
+.task-card {
+  background: white;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: grab;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-card strong {
+  font-size: 16px;
+}
+
+.task-card p {
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+  word-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* Priority and Due Date */
+.task-card .due-date {
+  font-size: 12px;
+  color: #d9534f;
+  font-weight: bold;
+}
+
+.task-card .priority {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Priority Colors */
+.task-card.high {
+  border-left: 5px solid red;
+  background-color: #ffe6e6;
+}
+
+.task-card.medium {
+  border-left: 5px solid orange;
+  background-color: #fff4e6;
+}
+
+.task-card.low {
+  border-left: 5px solid green;
+  background-color: #e6ffe6;
+}
+
+/* Inputs */
+input, textarea, select {
+  display: block;
+  width: 95%;
+  margin: 6px auto;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+button {
+  margin-top: 10px;
+  background: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+select {
+  display: block;
+  width: 100%;
+  max-width: 200px; /* Keep priority dropdown aligned */
+  margin: 6px auto;
+  padding: 5px;
+}
+
+/* Close Button */
+.task-details .close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #555;
+}
+
+.task-details .close-btn:hover {
+  color: #000;
+}
