@@ -21,7 +21,8 @@ db.run(`CREATE TABLE IF NOT EXISTS tasks (
   description TEXT,
   status TEXT,
   priority TEXT,
-  due_date TEXT
+  due_date TEXT,
+  time_spent INTEGER DEFAULT 0
 )`);
 
 // API to get tasks
@@ -47,6 +48,17 @@ app.patch("/tasks/:id", (req, res) => {
   db.run("UPDATE tasks SET status = ? WHERE id = ?", [status, id], function (err) {
     if (err) res.status(500).json({ error: err.message });
     else res.json({ message: "Task updated successfully" });
+  });
+});
+
+// API to update time spent on a task
+app.patch("/tasks/:id/time", (req, res) => {
+  const { id } = req.params;
+  const { time_spent } = req.body;
+
+  db.run("UPDATE tasks SET time_spent = ? WHERE id = ?", [time_spent, id], function (err) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json({ message: "Time spent updated successfully" });
   });
 });
 

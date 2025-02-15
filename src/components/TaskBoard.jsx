@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { getTasks, addTask } from "../api";
+import { getTasks, addTask, updateTaskTimeSpent } from "../api";
 
 const TaskBoard = () => {
   const [tasks, setTasks] = useState([]);
@@ -9,10 +9,19 @@ const TaskBoard = () => {
   const [newTaskDueDate, setNewTaskDueDate] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [selectedTask, setSelectedTask] = useState(null);
+  const [timer, setTimer] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     getTasks().then(setTasks);
   }, []);
+
+  useEffect(() => {
+    if (selectedTask) {
+      setTimer(selectedTask.time_spent || 0);
+    }
+  }, [selectedTask]);
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
@@ -45,7 +54,48 @@ const TaskBoard = () => {
 
   const closeTaskDetails = () => {
     setSelectedTask(null);
+    clearInterval(timerRef.current);
+    setIsRunning(false);
   };
+
+  const startTimer = () => {
+    if (!isRunning) {
+      setIsRunning(true);
+      timerRef.current = setInterval(() => {
+        setTimer((prev) => prev + 1);
+      }, 1000);
+    }
+  };
+
+  const pauseTimer = () => {
+    if (isRunning) {
+      clearInterval(timerRef.current);
+      setIsRunning(false);
+    }
+  };
+
+  const resetTimer = () => {
+    clearInterval(timerRef.current);
+    setTimer(0);
+    setIsRunning(false);
+  };
+
+  const saveTimeSpent = async () => {
+    if (selectedTask) {
+      await updateTaskTimeSpent(selectedTask.id, timer);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === selectedTask.id ? { ...task, time_spent: timer } : task
+        )
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (!isRunning) {
+      saveTimeSpent();
+    }
+  }, [isRunning]);
 
   return (
     <div className={`task-board-container ${selectedTask ? "with-details" : ""}`}>
@@ -119,6 +169,12 @@ const TaskBoard = () => {
           <p><strong>Due Date:</strong> {selectedTask.due_date || "No due date"}</p>
           <p><strong>Priority:</strong> {selectedTask.priority}</p>
           <textarea placeholder="Add notes..." />
+          <div>
+            <h4>Time Spent: {Math.floor(timer / 60)}m {timer % 60}s</h4>
+            <button onClick={startTimer}>Start</button>
+            <button onClick={pauseTimer}>Pause</button>
+            <button onClick={resetTimer}>Reset</button>
+          </div>
         </div>
       )}
     </div>
