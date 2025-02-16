@@ -22,3 +22,12 @@ export const updateTaskStatus = async (taskId, newStatus) => {
   });
   return response.json();
 };
+
+export const updateTaskTimeSpent = async (taskId, timeSpent) => {
+  const response = await fetch(`http://localhost:5001/tasks/${taskId}/time`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ time_spent: timeSpent }),
+  });
+  return response.json();
+};
