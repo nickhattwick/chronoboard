@@ -190,3 +190,42 @@ select {
 .task-details .close-btn:hover {
   color: #000;
 }
+
+/* Navigation Menu */
+.navigation {
+  background-color: #333;
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+
+.navigation ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.navigation ul li {
+  display: inline;
+}
+
+.navigation ul li a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.navigation ul li a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive Navigation */
+@media (max-width: 768px) {
+  .navigation ul {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
