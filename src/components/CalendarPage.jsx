@@ -6,6 +6,7 @@ import './CalendarPage.css';
 const CalendarPage = () => {
   const [tasks, setTasks] = useState([]);
   const [calendarTasks, setCalendarTasks] = useState({});
+  const [currentWeek, setCurrentWeek] = useState(getCurrentWeek());
 
   useEffect(() => {
     getTasks().then(setTasks);
@@ -32,16 +33,46 @@ const CalendarPage = () => {
     }
   };
 
-  const renderCalendar = () => {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const getCurrentWeek = () => {
+    const currentDate = new Date();
+    const startOfWeek = currentDate.getDate() - currentDate.getDay();
+    const endOfWeek = startOfWeek + 6;
+    const days = [];
 
-    return days.map((day) => (
-      <Droppable key={day} droppableId={day}>
+    for (let i = startOfWeek; i <= endOfWeek; i++) {
+      const date = new Date(currentDate.setDate(i));
+      days.push(date.toDateString());
+    }
+
+    return days;
+  };
+
+  const goToNextWeek = () => {
+    const nextWeek = currentWeek.map((date) => {
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 7);
+      return nextDate.toDateString();
+    });
+    setCurrentWeek(nextWeek);
+  };
+
+  const goToPreviousWeek = () => {
+    const previousWeek = currentWeek.map((date) => {
+      const prevDate = new Date(date);
+      prevDate.setDate(prevDate.getDate() - 7);
+      return prevDate.toDateString();
+    });
+    setCurrentWeek(previousWeek);
+  };
+
+  const renderCalendar = () => {
+    return currentWeek.map((date, index) => (
+      <Droppable key={date} droppableId={date}>
         {(provided) => (
           <div className="calendar-day" ref={provided.innerRef} {...provided.droppableProps}>
-            <h3>{day}</h3>
-            {calendarTasks[day] &&
-              calendarTasks[day].map((task, index) => (
+            <h3>{['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][index]} - {date}</h3>
+            {calendarTasks[date] &&
+              calendarTasks[date].map((task, index) => (
                 <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                   {(provided) => (
                     <div
@@ -68,6 +99,10 @@ const CalendarPage = () => {
   return (
     <div className="calendar-page">
       <h2>Calendar</h2>
+      <div className="calendar-navigation">
+        <button onClick={goToPreviousWeek}>Previous Week</button>
+        <button onClick={goToNextWeek}>Next Week</button>
+      </div>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="calendar">{renderCalendar()}</div>
       </DragDropContext>
