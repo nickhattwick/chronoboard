@@ -1,17 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Navigation from './Navigation';
+import './HomePage.css';
 
 const HomePage = () => {
   return (
-    <div>
-      <Navigation />
-      <h1>Welcome to ChronoBoard</h1>
-      <ul>
-        <li><Link to="/board">Board</Link></li>
-        <li><Link to="/calendar">Calendar</Link></li>
-        <li><Link to="/projects">Projects</Link></li>
-      </ul>
+    <div className="home-container">
+      <h1 className="home-title">Welcome to ChronoBoard</h1>
+      <div className="home-buttons">
+        <Link to="/board">Board</Link>
+        <Link to="/calendar">Calendar</Link>
+        <Link to="/projects">Projects</Link>
+      </div>
     </div>
   );
 };
