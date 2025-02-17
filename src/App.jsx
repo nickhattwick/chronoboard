@@ -1,15 +1,18 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import TaskBoard from "./components/TaskBoard"
+import { Routes, Route } from 'react-router-dom';
+import HomePage from './components/HomePage';
+import TaskBoard from './components/TaskBoard';
+import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <TaskBoard />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/board" element={<TaskBoard />} />
+        {/* Add other routes here */}
+      </Routes>
     </div>
   );
 }
 
-export default App
+export default App;
