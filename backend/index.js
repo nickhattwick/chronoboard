@@ -40,6 +40,14 @@ app.get("/tasks", (req, res) => {
   });
 });
 
+// API to get tasks with due dates
+app.get("/tasks/with-due-dates", (req, res) => {
+  db.all("SELECT * FROM tasks WHERE due_date IS NOT NULL", [], (err, rows) => {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json(rows);
+  });
+});
+
 // API to update task status
 app.patch("/tasks/:id", (req, res) => {
   const { id } = req.params;
