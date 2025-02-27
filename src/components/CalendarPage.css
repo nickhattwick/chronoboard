@@ -1,0 +1,189 @@
+.calendar-page {
+  padding: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.task-list h3 {
+  margin-right: 20px;
+}
+
+.task-list ul {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.task-list li {
+  margin-right: 10px;
+}
+
+.task-list button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.task-list button:hover {
+  background-color: #0056b3;
+}
+
+.calendar-page button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #28a745;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.calendar-page button:hover {
+  background-color: #218838;
+}
+
+/* Ensures Month View Uses a Fixed 7x5 or 7x6 Grid */
+.fc-dayGridMonth-view .fc-scrollgrid {
+  height: 85vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensures even column widths */
+.fc-dayGridMonth-view .fc-daygrid-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+/* Forces each row to have equal height */
+.fc-dayGridMonth-view .fc-daygrid-body tr {
+  height: calc(85vh / 6) !important; /* Distributes rows evenly */
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+}
+
+/* Ensures each day cell fills the row properly */
+.fc-dayGridMonth-view .fc-daygrid-day {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+/* Prevents events from pushing row height unevenly */
+.fc-daygrid-event {
+  max-height: 20px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* If events are too many, make them scrollable instead of stretching */
+.fc-daygrid-body .fc-daygrid-day-events {
+  overflow-y: auto;
+  max-height: 40px; /* Adjust to your preference */
+}
+
+/* Keeps Week & Day View with Smooth Scrolling */
+.fc-timeGridWeek-view,
+.fc-timeGridDay-view {
+  max-height: 85vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* Full Calendar Styling */
+.fc {
+  width: 90%;
+  height: 85vh; /* Expands to fill most of the screen */
+  margin: auto;
+}
+
+/* FullCalendar Container */
+.fc-view-container {
+  height: 100%;
+}
+
+/* Toolbar adjustments */
+.fc-toolbar {
+  margin-bottom: 15px;
+}
+
+/* Ensures proper slot height in time grid views */
+.fc-timegrid-container {
+  height: auto !important;
+}
+
+.fc-timegrid-slot {
+  height: 50px !important; /* Adjust the height of time slots */
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure modal appears above other elements */
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 300px;
+  text-align: center;
+}
+
+.modal-content input,
+.modal-content button {
+  margin: 10px 0;
+  width: 100%;
+}
+
+.modal-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.modal-content li {
+  padding: 5px;
+  cursor: pointer;
+}
+
+.modal-content li:hover {
+  background: #f0f0f0;
+}
+
+.context-menu {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1001; /* Ensure context menu appears above other elements */
+  padding: 10px;
+  cursor: pointer;
+}
+
+.context-menu:hover {
+  background: #f0f0f0;
+}
