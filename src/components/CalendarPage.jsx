@@ -1,111 +1,83 @@
 import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
 import { getTasks } from '../api';
 import './CalendarPage.css';
 
 const CalendarPage = () => {
-  const [tasks, setTasks] = useState([]);
-  const [calendarTasks, setCalendarTasks] = useState({});
-  const [currentWeek, setCurrentWeek] = useState(getCurrentWeek());
+  const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    getTasks().then(setTasks);
+    getTasks().then((tasks) => {
+      const formattedEvents = tasks.map((task) => ({
+        id: task.id.toString(),
+        title: task.title,
+        start: task.due_date ? new Date(task.due_date) : new Date(),
+        allDay: false,
+        extendedProps: {
+          description: task.description,
+          priority: task.priority,
+        },
+      }));
+      setEvents(formattedEvents);
+    });
   }, []);
 
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-
-    if (source.droppableId === destination.droppableId) {
-      return;
-    }
-
-    const updatedCalendarTasks = { ...calendarTasks };
-    const task = tasks.find((task) => task.id.toString() === result.draggableId);
-
-    if (task) {
-      if (!updatedCalendarTasks[destination.droppableId]) {
-        updatedCalendarTasks[destination.droppableId] = [];
-      }
-      updatedCalendarTasks[destination.droppableId].push(task);
-      setCalendarTasks(updatedCalendarTasks);
+  const handleDateSelect = (selectInfo) => {
+    let title = prompt('Enter a title for your task:');
+    if (title) {
+      let newEvent = {
+        id: Date.now().toString(),
+        title,
+        start: selectInfo.startStr,
+        end: selectInfo.endStr,
+        allDay: false,
+      };
+      setEvents([...events, newEvent]);
     }
   };
 
-  const getCurrentWeek = () => {
-    const currentDate = new Date();
-    const startOfWeek = currentDate.getDate() - currentDate.getDay();
-    const endOfWeek = startOfWeek + 6;
-    const days = [];
-
-    for (let i = startOfWeek; i <= endOfWeek; i++) {
-      const date = new Date(currentDate.setDate(i));
-      days.push(date.toDateString());
-    }
-
-    return days;
-  };
-
-  const goToNextWeek = () => {
-    const nextWeek = currentWeek.map((date) => {
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 7);
-      return nextDate.toDateString();
-    });
-    setCurrentWeek(nextWeek);
-  };
-
-  const goToPreviousWeek = () => {
-    const previousWeek = currentWeek.map((date) => {
-      const prevDate = new Date(date);
-      prevDate.setDate(prevDate.getDate() - 7);
-      return prevDate.toDateString();
-    });
-    setCurrentWeek(previousWeek);
-  };
-
-  const renderCalendar = () => {
-    return currentWeek.map((date, index) => (
-      <Droppable key={date} droppableId={date}>
-        {(provided) => (
-          <div className="calendar-day" ref={provided.innerRef} {...provided.droppableProps}>
-            <h3>{['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][index]} - {date}</h3>
-            {calendarTasks[date] &&
-              calendarTasks[date].map((task, index) => (
-                <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
-                  {(provided) => (
-                    <div
-                      className="calendar-task"
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <strong>{task.title}</strong>
-                      <p>{task.description}</p>
-                      <p className="due-date">📅 {task.due_date || 'No due date'}</p>
-                      <p className={`priority ${task.priority.toLowerCase()}`}>Priority: {task.priority}</p>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    ));
+  const handleEventDrop = (eventDropInfo) => {
+    const updatedEvents = events.map((event) =>
+      event.id === eventDropInfo.event.id
+        ? { ...event, start: eventDropInfo.event.startStr }
+        : event
+    );
+    setEvents(updatedEvents);
   };
 
   return (
     <div className="calendar-page">
       <h2>Calendar</h2>
-      <div className="calendar-navigation">
-        <button onClick={goToPreviousWeek}>Previous Week</button>
-        <button onClick={goToNextWeek}>Next Week</button>
-      </div>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="calendar">{renderCalendar()}</div>
-      </DragDropContext>
+      <FullCalendar
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        initialView="timeGridWeek"
+        editable={true}
+        selectable={true}
+        select={handleDateSelect}
+        events={events}
+        eventDrop={handleEventDrop}
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay',
+        }}
+        height="85vh" /* Keeps the calendar large */
+        contentHeight="auto"
+        slotMinTime="00:00:00" /* Allows scrolling up to midnight */
+        slotMaxTime="24:00:00" /* Allows scrolling down to midnight */
+        scrollTime="08:00:00" /* Default scroll to 8 AM */
+        nowIndicator={true} /* Shows red "current time" line */
+        dayMaxEventRows={true} /* Ensures multiple events per row */
+        allDaySlot={false} /* Removes unnecessary "All-day" row */
+        views={{
+          dayGridMonth: { height: '85vh', dayMaxEventRows: true, fixedWeekCount: true },
+          timeGridWeek: { contentHeight: 'auto' },
+          timeGridDay: { contentHeight: 'auto' },
+        }}
+      />
     </div>
   );
 };
