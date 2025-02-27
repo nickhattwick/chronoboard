@@ -102,3 +102,51 @@ export const deleteCalendarEvent = async (eventId) => {
   });
   return response.json();
 };
+
+// Project-related API functions
+
+export const getProjects = async () => {
+  try {
+    const response = await fetch(`${API_URL}/projects`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+    return [];
+  }
+};
+
+export const addProject = async (project) => {
+  const response = await fetch(`${API_URL}/projects`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(project),
+  });
+  return response.json();
+};
+
+export const updateProject = async (projectId, updatedProject) => {
+  try {
+    const response = await fetch(`${API_URL}/projects/${projectId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedProject),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error updating project:', error);
+    throw error;
+  }
+};
+
+export const deleteProject = async (projectId) => {
+  const response = await fetch(`${API_URL}/projects/${projectId}`, {
+    method: "DELETE",
+  });
+  return response.json();
+};

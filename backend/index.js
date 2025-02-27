@@ -35,6 +35,13 @@ db.run(`CREATE TABLE IF NOT EXISTS calendar_events (
   FOREIGN KEY(task_id) REFERENCES tasks(id)
 )`);
 
+// Create table for projects
+db.run(`CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT,
+  description TEXT
+)`);
+
 // API to get tasks
 app.get("/tasks", (req, res) => {
   db.all("SELECT * FROM tasks", [], (err, rows) => {
@@ -154,6 +161,53 @@ app.delete("/calendar-events/:id", (req, res) => {
   db.run("DELETE FROM calendar_events WHERE id = ?", [id], function (err) {
     if (err) res.status(500).json({ error: err.message });
     else res.json({ message: "Calendar event deleted successfully" });
+  });
+});
+
+// API to get projects
+app.get("/projects", (req, res) => {
+  db.all("SELECT * FROM projects", [], (err, rows) => {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json(rows);
+  });
+});
+
+// API to add project
+app.post("/projects", (req, res) => {
+  const { title, description } = req.body;
+
+  db.run(
+    "INSERT INTO projects (title, description) VALUES (?, ?)",
+    [title, description],
+    function (err) {
+      if (err) res.status(500).json({ error: err.message });
+      else res.json({ id: this.lastID });
+    }
+  );
+});
+
+// API to update project
+app.put("/projects/:id", (req, res) => {
+  const { id } = req.params;
+  const { title, description } = req.body;
+
+  db.run(
+    "UPDATE projects SET title = ?, description = ? WHERE id = ?",
+    [title, description, id],
+    function (err) {
+      if (err) res.status(500).json({ error: err.message });
+      else res.json({ message: "Project updated successfully" });
+    }
+  );
+});
+
+// API to delete project
+app.delete("/projects/:id", (req, res) => {
+  const { id } = req.params;
+
+  db.run("DELETE FROM projects WHERE id = ?", [id], function (err) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json({ message: "Project deleted successfully" });
   });
 });
 
