@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { getTasks, addTask, updateTaskTimeSpent } from "../api";
+import { getTasks, addTask, updateTaskTimeSpent, getProjects, getTasksByProject } from "../api";
 
 const TaskBoard = () => {
   const [tasks, setTasks] = useState([]);
@@ -12,9 +12,13 @@ const TaskBoard = () => {
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const timerRef = useRef(null);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState("");
+  const [filterProject, setFilterProject] = useState("");
 
   useEffect(() => {
     getTasks().then(setTasks);
+    getProjects().then(setProjects);
   }, []);
 
   useEffect(() => {
@@ -23,6 +27,14 @@ const TaskBoard = () => {
     }
   }, [selectedTask]);
 
+  useEffect(() => {
+    if (filterProject) {
+      getTasksByProject(filterProject).then(setTasks);
+    } else {
+      getTasks().then(setTasks);
+    }
+  }, [filterProject]);
+
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
     const task = { 
@@ -30,13 +42,15 @@ const TaskBoard = () => {
       description: newTaskDescription, 
       status: "To Do", 
       priority, 
-      due_date: newTaskDueDate 
+      due_date: newTaskDueDate,
+      projectId: selectedProject
     };
     const addedTask = await addTask(task);
     setTasks([...tasks, { ...task, id: addedTask.id }]);
     setNewTaskTitle("");
     setNewTaskDescription("");
     setNewTaskDueDate("");
+    setSelectedProject("");
   };
 
   const onDragEnd = (result) => {
@@ -122,7 +136,20 @@ const TaskBoard = () => {
           <option value="Medium">⚡ Medium</option>
           <option value="Low">🌱 Low</option>
         </select>
+        <select value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
+          <option value="">Select Project</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>{project.title}</option>
+          ))}
+        </select>
         <button onClick={handleAddTask}>Add Task</button>
+
+        <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)}>
+          <option value="">All Projects</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>{project.title}</option>
+          ))}
+        </select>
 
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="board">

@@ -150,3 +150,46 @@ export const deleteProject = async (projectId) => {
   });
   return response.json();
 };
+
+// Add projectId to task-related API functions
+
+export const addTaskWithProject = async (task) => {
+  const response = await fetch(`${API_URL}/tasks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(task),
+  });
+  return response.json();
+};
+
+export const updateTaskWithProject = async (taskId, updatedTask) => {
+  try {
+    const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedTask),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error updating task:', error);
+    throw error;
+  }
+};
+
+// Add API functions for fetching tasks by project
+
+export const getTasksByProject = async (projectId) => {
+  try {
+    const response = await fetch(`${API_URL}/tasks/by-project/${projectId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching tasks by project:', error);
+    return [];
+  }
+};

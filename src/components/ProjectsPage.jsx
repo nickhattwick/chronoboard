@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getProjects, addProject, updateProject, deleteProject } from '../api';
+import { useNavigate } from 'react-router-dom';
 import './ProjectsPage.css';
 
 const ProjectsPage = () => {
@@ -7,6 +8,7 @@ const ProjectsPage = () => {
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [editingProject, setEditingProject] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -47,6 +49,10 @@ const ProjectsPage = () => {
     setProjects(projects.filter((project) => project.id !== projectId));
   };
 
+  const handleProjectClick = (projectId) => {
+    navigate(`/board?projectId=${projectId}`);
+  };
+
   return (
     <div className="projects-page">
       <h2>Projects</h2>
@@ -69,7 +75,7 @@ const ProjectsPage = () => {
       </div>
       <div className="project-list">
         {projects.map((project) => (
-          <div key={project.id} className="project-card">
+          <div key={project.id} className="project-card" onClick={() => handleProjectClick(project.id)}>
             <h3>{project.title}</h3>
             <p>{project.description}</p>
             <button onClick={() => handleEditProject(project)}>Edit</button>
