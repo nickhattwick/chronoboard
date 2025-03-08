@@ -1,5 +1,7 @@
 .projects-page {
   padding: 20px;
+  height: 100vh;
+  overflow-y: auto; /* Ensure the view fits within the screen */
 }
 
 .project-form {
@@ -30,8 +32,8 @@
 }
 
 .project-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Three-column layout */
   gap: 10px;
 }
 
