@@ -1,0 +1,67 @@
+.projects-page {
+  padding: 20px;
+  height: 100vh;
+  overflow-y: auto; /* Ensure the view fits within the screen */
+}
+
+.project-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.project-form input,
+.project-form textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.project-form button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.project-form button:hover {
+  background-color: #0056b3;
+}
+
+.project-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Three-column layout */
+  gap: 10px;
+}
+
+.project-card {
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f8f9fa;
+}
+
+.project-card h3 {
+  margin: 0 0 10px;
+}
+
+.project-card p {
+  margin: 0 0 10px;
+}
+
+.project-card button {
+  padding: 5px 10px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.project-card button:hover {
+  background-color: #c82333;
+}
