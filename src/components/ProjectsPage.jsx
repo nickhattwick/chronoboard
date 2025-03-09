@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getProjects, addProject, updateProject, deleteProject } from '../api';
+import { getProjects, addProject, updateProject, deleteProject, getProjectById } from '../api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import './ProjectsPage.css';
 
 const ProjectsPage = () => {
@@ -7,6 +8,10 @@ const ProjectsPage = () => {
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [editingProject, setEditingProject] = useState(null);
+  const [projectDetails, setProjectDetails] = useState(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const projectIdFromUrl = searchParams.get("projectId");
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -16,6 +21,12 @@ const ProjectsPage = () => {
 
     fetchProjects();
   }, []);
+
+  useEffect(() => {
+    if (projectIdFromUrl) {
+      getProjectById(projectIdFromUrl).then(setProjectDetails);
+    }
+  }, [projectIdFromUrl]);
 
   const handleAddProject = async () => {
     if (!newProjectTitle.trim()) return;
@@ -47,9 +58,13 @@ const ProjectsPage = () => {
     setProjects(projects.filter((project) => project.id !== projectId));
   };
 
+  const handleProjectClick = (project) => {
+    navigate(`/board?projectId=${project.id}`);
+  };
+
   return (
     <div className="projects-page">
-      <h2>Projects</h2>
+      <h2>{projectDetails ? projectDetails.title : "Projects"}</h2>
       <div className="project-form">
         <input
           value={newProjectTitle}
@@ -69,11 +84,16 @@ const ProjectsPage = () => {
       </div>
       <div className="project-list">
         {projects.map((project) => (
-          <div key={project.id} className="project-card">
+          <div
+            key={project.id}
+            className="project-card"
+            onClick={() => handleProjectClick(project)}
+            style={{ cursor: 'pointer' }}
+          >
             <h3>{project.title}</h3>
             <p>{project.description}</p>
-            <button onClick={() => handleEditProject(project)}>Edit</button>
-            <button onClick={() => handleDeleteProject(project.id)}>Delete</button>
+            <button onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}>Edit</button>
+            <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }}>Delete</button>
           </div>
         ))}
       </div>

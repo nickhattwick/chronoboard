@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { getTasks, addTask, updateTaskTimeSpent } from "../api";
+import { getTasks, addTask, updateTaskTimeSpent, getProjects, getTasksByProject, getProjectById, deleteTask, updateTask } from "../api";
 
 const TaskBoard = () => {
   const [tasks, setTasks] = useState([]);
@@ -12,16 +13,40 @@ const TaskBoard = () => {
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const timerRef = useRef(null);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState("");
+  const [filterProject, setFilterProject] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [projectDetails, setProjectDetails] = useState(null);
+  const [searchParams] = useSearchParams();
+  const projectIdFromUrl = searchParams.get("projectId");
 
   useEffect(() => {
-    getTasks().then(setTasks);
-  }, []);
+    getProjects().then(setProjects);
+    
+    if (projectIdFromUrl) {
+      setFilterProject(projectIdFromUrl);
+      getProjectById(projectIdFromUrl).then(setProjectDetails);
+      getTasksByProject(projectIdFromUrl).then(setTasks);
+    } else {
+      getTasks().then(setTasks);
+    }
+  }, [projectIdFromUrl]);
 
   useEffect(() => {
     if (selectedTask) {
       setTimer(selectedTask.time_spent || 0);
     }
   }, [selectedTask]);
+
+  useEffect(() => {
+    if (filterProject) {
+      getTasksByProject(filterProject).then(setTasks);
+    } else {
+      getTasks().then(setTasks);
+    }
+  }, [filterProject]);
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
@@ -30,13 +55,36 @@ const TaskBoard = () => {
       description: newTaskDescription, 
       status: "To Do", 
       priority, 
-      due_date: newTaskDueDate 
+      due_date: newTaskDueDate,
+      projectId: projectIdFromUrl || selectedProject // Default to project from URL if available
     };
     const addedTask = await addTask(task);
     setTasks([...tasks, { ...task, id: addedTask.id }]);
     setNewTaskTitle("");
     setNewTaskDescription("");
     setNewTaskDueDate("");
+    setSelectedProject("");
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    await deleteTask(taskId);
+    setTasks(tasks.filter((task) => task.id !== taskId));
+    setSelectedTask(null);
+  };
+
+  const handleUpdateTask = async () => {
+    if (!selectedTask) return;
+    const updatedTask = { 
+      ...selectedTask, 
+      title: newTaskTitle, 
+      description: newTaskDescription, 
+      priority, 
+      due_date: newTaskDueDate 
+    };
+    await updateTask(selectedTask.id, updatedTask);
+    setTasks(tasks.map((task) => (task.id === selectedTask.id ? updatedTask : task)));
+    setSelectedTask(updatedTask);
+    setIsEditing(false);
   };
 
   const onDragEnd = (result) => {
@@ -97,10 +145,30 @@ const TaskBoard = () => {
     }
   }, [isRunning]);
 
+  const startEditing = () => {
+    setIsEditing(true);
+    setNewTaskTitle(selectedTask.title);
+    setNewTaskDescription(selectedTask.description);
+    setNewTaskDueDate(selectedTask.due_date);
+    setPriority(selectedTask.priority);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+  };
+
   return (
     <div className={`task-board-container ${selectedTask ? "with-details" : ""}`}>
+      
+      {projectDetails && (
+        <div className="project-header">
+          <h2>{projectDetails.title}</h2>
+          <p>{projectDetails.description}</p>
+        </div>
+      )}
+
       <div className="task-board">
-        <h2>ChronoBoard</h2>
+        <h2>{projectDetails ? projectDetails.title : "ChronoBoard"}</h2>
 
         <input 
           value={newTaskTitle} 
@@ -122,10 +190,27 @@ const TaskBoard = () => {
           <option value="Medium">⚡ Medium</option>
           <option value="Low">🌱 Low</option>
         </select>
+        
+        {!projectIdFromUrl && (
+          <select value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
+            <option value="">Select Project</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>{project.title}</option>
+            ))}
+          </select>
+        )}
+
         <button onClick={handleAddTask}>Add Task</button>
 
+        <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)}>
+          <option value="">All Projects</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>{project.title}</option>
+          ))}
+        </select>
+
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="board">
+          <div className="board" style={{ overflowY: 'scroll', maxHeight: '70vh' }}>
             {["To Do", "In Progress", "Done"].map((status) => (
               <Droppable key={status} droppableId={status}>
                 {(provided) => (
@@ -137,16 +222,16 @@ const TaskBoard = () => {
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {(provided) => (
                             <div
-                              className={`task-card ${task.priority ? task.priority.toLowerCase() : "medium"}`}
+                              className="task-card"
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              onClick={() => openTaskDetails(task)} // Open details when clicked
+                              onClick={() => openTaskDetails(task)}
                             >
                               <strong>{task.title}</strong>
                               <p>{task.description}</p>
                               <p className="due-date">📅 {task.due_date || "No due date"}</p>
-                              <p className={`priority ${task.priority.toLowerCase()}`}>Priority: {task.priority}</p>
+                              <p className="priority">Priority: {task.priority}</p>
                             </div>
                           )}
                         </Draggable>
@@ -160,14 +245,44 @@ const TaskBoard = () => {
         </DragDropContext>
       </div>
 
-      {/* Task Details Panel */}
       {selectedTask && (
         <div className="task-details open">
           <button onClick={closeTaskDetails} className="close-button">✖</button>
-          <h3>{selectedTask.title}</h3>
-          <p><strong>Description:</strong> {selectedTask.description}</p>
-          <p><strong>Due Date:</strong> {selectedTask.due_date || "No due date"}</p>
-          <p><strong>Priority:</strong> {selectedTask.priority}</p>
+          {isEditing ? (
+            <>
+              <input 
+                value={newTaskTitle} 
+                onChange={(e) => setNewTaskTitle(e.target.value)} 
+                placeholder="Task title" 
+              />
+              <textarea 
+                value={newTaskDescription} 
+                onChange={(e) => setNewTaskDescription(e.target.value)} 
+                placeholder="Task description"
+              />
+              <input 
+                type="date" 
+                value={newTaskDueDate} 
+                onChange={(e) => setNewTaskDueDate(e.target.value)}
+              />
+              <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                <option value="High">🔥 High</option>
+                <option value="Medium">⚡ Medium</option>
+                <option value="Low">🌱 Low</option>
+              </select>
+              <button onClick={handleUpdateTask}>Save</button>
+              <button onClick={cancelEditing}>Cancel</button>
+            </>
+          ) : (
+            <>
+              <h3>{selectedTask.title}</h3>
+              <p><strong>Description:</strong> {selectedTask.description}</p>
+              <p><strong>Due Date:</strong> {selectedTask.due_date || "No due date"}</p>
+              <p><strong>Priority:</strong> {selectedTask.priority}</p>
+              <button onClick={startEditing}>Edit</button>
+              <button onClick={() => handleDeleteTask(selectedTask.id)}>Delete Task</button>
+            </>
+          )}
           <textarea placeholder="Add notes..." />
           <div>
             <h4>Time Spent: {Math.floor(timer / 60)}m {timer % 60}s</h4>

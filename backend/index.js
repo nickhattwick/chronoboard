@@ -22,7 +22,8 @@ db.run(`CREATE TABLE IF NOT EXISTS tasks (
   status TEXT,
   priority TEXT,
   due_date TEXT,
-  time_spent INTEGER DEFAULT 0
+  time_spent INTEGER DEFAULT 0,
+  projectId INTEGER
 )`);
 
 // Create table for calendar events
@@ -65,6 +66,15 @@ app.get("/tasks/with-due-dates", (req, res) => {
   });
 });
 
+// API to get tasks by project
+app.get("/tasks/by-project/:projectId", (req, res) => {
+  const { projectId } = req.params;
+  db.all("SELECT * FROM tasks WHERE projectId = ?", [projectId], (err, rows) => {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json(rows);
+  });
+});
+
 // API to update task status
 app.patch("/tasks/:id", (req, res) => {
   const { id } = req.params;
@@ -79,11 +89,11 @@ app.patch("/tasks/:id", (req, res) => {
 // API to update task
 app.put("/tasks/:id", (req, res) => {
   const { id } = req.params;
-  const { title, description, status, priority, due_date } = req.body;
+  const { title, description, status, priority, due_date, projectId } = req.body;
 
   db.run(
-    "UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, due_date = ? WHERE id = ?",
-    [title, description, status, priority, due_date, id],
+    "UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, due_date = ?, projectId = ? WHERE id = ?",
+    [title, description, status, priority, due_date, projectId, id],
     function (err) {
       if (err) res.status(500).json({ error: err.message });
       else res.json({ message: "Task updated successfully" });
@@ -104,17 +114,27 @@ app.patch("/tasks/:id/time", (req, res) => {
 
 // API to add task
 app.post("/tasks", (req, res) => {
-  const { title, description, status, priority, due_date } = req.body;
+  const { title, description, status, priority, due_date, projectId } = req.body;
   const validPriority = ["High", "Medium", "Low"].includes(priority) ? priority : "Medium";
 
   db.run(
-    "INSERT INTO tasks (title, description, status, priority, due_date) VALUES (?, ?, ?, ?, ?)",
-    [title, description || "", status, validPriority, due_date || "No due date"],
+    "INSERT INTO tasks (title, description, status, priority, due_date, projectId) VALUES (?, ?, ?, ?, ?, ?)",
+    [title, description || "", status, validPriority, due_date || "No due date", projectId],
     function (err) {
       if (err) res.status(500).json({ error: err.message });
       else res.json({ id: this.lastID });
     }
   );
+});
+
+// API to delete task
+app.delete("/tasks/:id", (req, res) => {
+  const { id } = req.params;
+
+  db.run("DELETE FROM tasks WHERE id = ?", [id], function (err) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json({ message: "Task deleted successfully" });
+  });
 });
 
 // API to get calendar events
