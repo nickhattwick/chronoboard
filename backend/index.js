@@ -127,6 +127,16 @@ app.post("/tasks", (req, res) => {
   );
 });
 
+// API to delete task
+app.delete("/tasks/:id", (req, res) => {
+  const { id } = req.params;
+
+  db.run("DELETE FROM tasks WHERE id = ?", [id], function (err) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json({ message: "Task deleted successfully" });
+  });
+});
+
 // API to get calendar events
 app.get("/calendar-events", (req, res) => {
   db.all("SELECT * FROM calendar_events", [], (err, rows) => {

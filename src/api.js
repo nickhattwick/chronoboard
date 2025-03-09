@@ -57,6 +57,13 @@ export const updateTask = async (taskId, updatedTask) => {
   }
 };
 
+export const deleteTask = async (taskId) => {
+  const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+    method: "DELETE",
+  });
+  return response.json();
+};
+
 export const getCalendarEvents = async () => {
   try {
     const response = await fetch(`${API_URL}/calendar-events`);
@@ -191,5 +198,18 @@ export const getTasksByProject = async (projectId) => {
   } catch (error) {
     console.error('Error fetching tasks by project:', error);
     return [];
+  }
+};
+
+export const getProjectById = async (projectId) => {
+  try {
+    const response = await fetch(`${API_URL}/projects/${projectId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching project by ID:', error);
+    return null;
   }
 };
