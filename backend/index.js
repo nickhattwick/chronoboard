@@ -90,10 +90,11 @@ app.patch("/tasks/:id", (req, res) => {
 app.put("/tasks/:id", (req, res) => {
   const { id } = req.params;
   const { title, description, status, priority, due_date, projectId } = req.body;
+  const validPriority = ["High", "Medium", "Low"].includes(priority) ? priority : "Medium";
 
   db.run(
     "UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, due_date = ?, projectId = ? WHERE id = ?",
-    [title, description, status, priority, due_date, projectId, id],
+    [title, description, status, validPriority, due_date, projectId, id],
     function (err) {
       if (err) res.status(500).json({ error: err.message });
       else {
@@ -104,9 +105,12 @@ app.put("/tasks/:id", (req, res) => {
             function (err) {
               if (err) res.status(500).json({ error: err.message });
               else {
+                const startTime = due_date.includes("T") ? due_date : `${due_date}T07:00:00`;
+                const endTime = due_date.includes("T") ? due_date : `${due_date}T07:30:00`;
+
                 db.run(
-                  "INSERT INTO calendar_events (task_id, start, end, all_day) VALUES (?, ?, ?, ?)",
-                  [id, due_date, due_date, true],
+                  "INSERT INTO calendar_events (task_id, start, end, all_day, due_flag) VALUES (?, ?, ?, ?, ?)",
+                  [id, startTime, endTime, false, 1], // ✅ Set due_flag = 1
                   function (err) {
                     if (err) res.status(500).json({ error: err.message });
                     else res.json({ message: "Task and calendar event updated successfully" });
@@ -152,17 +156,22 @@ app.post("/tasks", (req, res) => {
     function (err) {
       if (err) res.status(500).json({ error: err.message });
       else {
+        const taskId = this.lastID; // Get the last inserted task ID
+
         if (due_date) {
+          const startTime = due_date.includes("T") ? due_date : `${due_date}T07:00:00`;
+          const endTime = due_date.includes("T") ? due_date : `${due_date}T07:30:00`;
+
           db.run(
-            "INSERT INTO calendar_events (task_id, start, end, all_day) VALUES (?, ?, ?, ?)",
-            [this.lastID, due_date, due_date, true],
+            "INSERT INTO calendar_events (task_id, start, end, all_day, due_flag) VALUES (?, ?, ?, ?, ?)",
+            [taskId, startTime, endTime, false, 1], // ✅ Set due_flag = 1
             function (err) {
               if (err) res.status(500).json({ error: err.message });
-              else res.json({ id: this.lastID });
+              else res.json({ id: taskId });
             }
           );
         } else {
-          res.json({ id: this.lastID });
+          res.json({ id: taskId });
         }
       }
     }
@@ -292,9 +301,12 @@ app.post("/calendar/sync-due-dates", (req, res) => {
           // Add missing events
           tasks.forEach(task => {
             if (!eventIds.includes(task.id)) {
+              const startTime = due_date.includes("T") ? due_date : `${due_date}T07:00:00`;
+              const endTime = due_date.includes("T") ? due_date : `${due_date}T07:30:00`;
+
               db.run(
                 "INSERT INTO calendar_events (task_id, start, end, all_day) VALUES (?, ?, ?, ?)",
-                [task.id, task.due_date, task.due_date, true],
+                [id, startTime, endTime, false],
                 function (err) {
                   if (err) console.error("Error adding calendar event", err);
                 }

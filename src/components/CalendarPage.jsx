@@ -23,29 +23,36 @@ const CalendarPage = () => {
       try {
         const tasks = await getTasks();
         setTasks(tasks);
+  
         const calendarEvents = await getCalendarEvents();
+  
+        // Format events
         const formattedEvents = calendarEvents.map((event) => {
           const task = tasks.find((task) => task.id === event.task_id);
+  
+          const isDueDate = event.due_flag === 1;
+          const titlePrefix = isDueDate ? "Due - " : "";
+  
           return {
             id: event.id.toString(),
-            title: task ? task.title : 'Unknown Task',
+            title: titlePrefix + (task ? task.title : "Unknown Task"),
             start: event.start,
             end: event.end,
             allDay: event.all_day,
             extendedProps: {
-              description: task ? task.description : '',
-              priority: task ? task.priority : 'Medium',
+              description: task ? task.description : "",
+              priority: task ? task.priority : "Medium",
             },
           };
         });
         setEvents(formattedEvents);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchData();
-  }, []);
+  }, [tasks, events]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -224,26 +231,15 @@ const CalendarPage = () => {
   const handleSyncDueDates = async () => {
     try {
       await syncDueDates();
+  
       const tasks = await getTasks();
       setTasks(tasks);
+  
       const calendarEvents = await getCalendarEvents();
-      const formattedEvents = calendarEvents.map((event) => {
-        const task = tasks.find((task) => task.id === event.task_id);
-        return {
-          id: event.id.toString(),
-          title: task ? task.title : 'Unknown Task',
-          start: event.start,
-          end: event.end,
-          allDay: event.all_day,
-          extendedProps: {
-            description: task ? task.description : '',
-            priority: task ? task.priority : 'Medium',
-          },
-        };
-      });
-      setEvents(formattedEvents);
+      
+      setEvents(calendarEvents); // <-- Don't format here, useEffect will handle it
     } catch (error) {
-      console.error('Error syncing due dates:', error);
+      console.error("Error syncing due dates:", error);
     }
   };
 
