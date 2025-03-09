@@ -22,6 +22,10 @@ const TaskBoard = () => {
   const [searchParams] = useSearchParams();
   const projectIdFromUrl = searchParams.get("projectId");
 
+  const [dueDateFilter, setDueDateFilter] = useState(() => {
+    return localStorage.getItem("dueDateFilter") || "All Tasks";
+  });
+
   useEffect(() => {
     getProjects().then(setProjects);
     
@@ -47,6 +51,10 @@ const TaskBoard = () => {
       getTasks().then(setTasks);
     }
   }, [filterProject]);
+
+  useEffect(() => {
+    localStorage.setItem("dueDateFilter", dueDateFilter);
+  }, [dueDateFilter]);
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
@@ -157,6 +165,35 @@ const TaskBoard = () => {
     setIsEditing(false);
   };
 
+  const filterTasksByDueDate = (tasks) => {
+    const now = new Date();
+    switch (dueDateFilter) {
+      case "Next 7 Days":
+        return tasks.filter((task) => {
+          const dueDate = new Date(task.due_date);
+          return dueDate >= now && dueDate <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        });
+      case "Next 14 Days":
+        return tasks.filter((task) => {
+          const dueDate = new Date(task.due_date);
+          return dueDate >= now && dueDate <= new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        });
+      case "Next 30 Days":
+        return tasks.filter((task) => {
+          const dueDate = new Date(task.due_date);
+          return dueDate >= now && dueDate <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        });
+      case "Next 90 Days":
+        return tasks.filter((task) => {
+          const dueDate = new Date(task.due_date);
+          return dueDate >= now && dueDate <= new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+        });
+      case "All Tasks":
+      default:
+        return tasks;
+    }
+  };
+
   return (
     <div className={`task-board-container ${selectedTask ? "with-details" : ""}`}>
       
@@ -209,6 +246,14 @@ const TaskBoard = () => {
           ))}
         </select>
 
+        <select value={dueDateFilter} onChange={(e) => setDueDateFilter(e.target.value)}>
+          <option value="All Tasks">All Tasks</option>
+          <option value="Next 7 Days">Next 7 Days</option>
+          <option value="Next 14 Days">Next 14 Days</option>
+          <option value="Next 30 Days">Next 30 Days</option>
+          <option value="Next 90 Days">Next 90 Days</option>
+        </select>
+
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="board" style={{ overflowY: 'scroll', maxHeight: '70vh' }}>
             {["To Do", "In Progress", "Done"].map((status) => (
@@ -216,7 +261,7 @@ const TaskBoard = () => {
                 {(provided) => (
                   <div className="column" ref={provided.innerRef} {...provided.droppableProps}>
                     <h3>{status}</h3>
-                    {tasks
+                    {filterTasksByDueDate(tasks)
                       .filter((task) => task.status === status)
                       .map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
