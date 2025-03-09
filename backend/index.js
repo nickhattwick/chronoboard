@@ -96,7 +96,36 @@ app.put("/tasks/:id", (req, res) => {
     [title, description, status, priority, due_date, projectId, id],
     function (err) {
       if (err) res.status(500).json({ error: err.message });
-      else res.json({ message: "Task updated successfully" });
+      else {
+        if (due_date) {
+          db.run(
+            "DELETE FROM calendar_events WHERE task_id = ?",
+            [id],
+            function (err) {
+              if (err) res.status(500).json({ error: err.message });
+              else {
+                db.run(
+                  "INSERT INTO calendar_events (task_id, start, end, all_day) VALUES (?, ?, ?, ?)",
+                  [id, due_date, due_date, true],
+                  function (err) {
+                    if (err) res.status(500).json({ error: err.message });
+                    else res.json({ message: "Task and calendar event updated successfully" });
+                  }
+                );
+              }
+            }
+          );
+        } else {
+          db.run(
+            "DELETE FROM calendar_events WHERE task_id = ?",
+            [id],
+            function (err) {
+              if (err) res.status(500).json({ error: err.message });
+              else res.json({ message: "Task updated successfully" });
+            }
+          );
+        }
+      }
     }
   );
 });
@@ -122,7 +151,20 @@ app.post("/tasks", (req, res) => {
     [title, description || "", status, validPriority, due_date || "No due date", projectId],
     function (err) {
       if (err) res.status(500).json({ error: err.message });
-      else res.json({ id: this.lastID });
+      else {
+        if (due_date) {
+          db.run(
+            "INSERT INTO calendar_events (task_id, start, end, all_day) VALUES (?, ?, ?, ?)",
+            [this.lastID, due_date, due_date, true],
+            function (err) {
+              if (err) res.status(500).json({ error: err.message });
+              else res.json({ id: this.lastID });
+            }
+          );
+        } else {
+          res.json({ id: this.lastID });
+        }
+      }
     }
   );
 });
@@ -133,7 +175,12 @@ app.delete("/tasks/:id", (req, res) => {
 
   db.run("DELETE FROM tasks WHERE id = ?", [id], function (err) {
     if (err) res.status(500).json({ error: err.message });
-    else res.json({ message: "Task deleted successfully" });
+    else {
+      db.run("DELETE FROM calendar_events WHERE task_id = ?", [id], function (err) {
+        if (err) res.status(500).json({ error: err.message });
+        else res.json({ message: "Task and calendar event deleted successfully" });
+      });
+    }
   });
 });
 
@@ -228,6 +275,50 @@ app.delete("/projects/:id", (req, res) => {
   db.run("DELETE FROM projects WHERE id = ?", [id], function (err) {
     if (err) res.status(500).json({ error: err.message });
     else res.json({ message: "Project deleted successfully" });
+  });
+});
+
+// API to sync due dates
+app.post("/calendar/sync-due-dates", (req, res) => {
+  db.all("SELECT * FROM tasks WHERE due_date IS NOT NULL", [], (err, tasks) => {
+    if (err) res.status(500).json({ error: err.message });
+    else {
+      db.all("SELECT * FROM calendar_events", [], (err, events) => {
+        if (err) res.status(500).json({ error: err.message });
+        else {
+          const taskIds = tasks.map(task => task.id);
+          const eventIds = events.map(event => event.task_id);
+
+          // Add missing events
+          tasks.forEach(task => {
+            if (!eventIds.includes(task.id)) {
+              db.run(
+                "INSERT INTO calendar_events (task_id, start, end, all_day) VALUES (?, ?, ?, ?)",
+                [task.id, task.due_date, task.due_date, true],
+                function (err) {
+                  if (err) console.error("Error adding calendar event", err);
+                }
+              );
+            }
+          });
+
+          // Remove orphaned events
+          events.forEach(event => {
+            if (!taskIds.includes(event.task_id)) {
+              db.run(
+                "DELETE FROM calendar_events WHERE id = ?",
+                [event.id],
+                function (err) {
+                  if (err) console.error("Error deleting calendar event", err);
+                }
+              );
+            }
+          });
+
+          res.json({ message: "Due dates synced successfully" });
+        }
+      });
+    }
   });
 });
 

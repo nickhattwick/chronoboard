@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { getTasks, addTask, updateTaskTimeSpent, getProjects, getTasksByProject, getProjectById, deleteTask, updateTask } from "../api";
+import { getTasks, addTask, updateTaskTimeSpent, getProjects, getTasksByProject, getProjectById, deleteTask, updateTask, addCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from "../api";
 
 const TaskBoard = () => {
   const [tasks, setTasks] = useState([]);
@@ -72,6 +72,16 @@ const TaskBoard = () => {
     setNewTaskDescription("");
     setNewTaskDueDate("");
     setSelectedProject("");
+
+    if (newTaskDueDate) {
+      const newEvent = {
+        task_id: addedTask.id,
+        start: newTaskDueDate,
+        end: newTaskDueDate,
+        all_day: true,
+      };
+      await addCalendarEvent(newEvent);
+    }
   };
 
   const handleDeleteTask = async (taskId) => {
@@ -93,6 +103,18 @@ const TaskBoard = () => {
     setTasks(tasks.map((task) => (task.id === selectedTask.id ? updatedTask : task)));
     setSelectedTask(updatedTask);
     setIsEditing(false);
+
+    if (newTaskDueDate) {
+      const newEvent = {
+        task_id: selectedTask.id,
+        start: newTaskDueDate,
+        end: newTaskDueDate,
+        all_day: true,
+      };
+      await updateCalendarEvent(selectedTask.id, newEvent);
+    } else {
+      await deleteCalendarEvent(selectedTask.id);
+    }
   };
 
   const onDragEnd = (result) => {

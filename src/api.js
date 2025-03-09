@@ -213,3 +213,19 @@ export const getProjectById = async (projectId) => {
     return null;
   }
 };
+
+// Add a new syncDueDates function to call the /calendar/sync-due-dates API route
+export const syncDueDates = async () => {
+  try {
+    const response = await fetch(`${API_URL}/calendar/sync-due-dates`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error syncing due dates:', error);
+    throw error;
+  }
+};
