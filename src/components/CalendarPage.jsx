@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { getTasks, addTask, updateTask, getCalendarEvents, addCalendarEvent, deleteCalendarEvent, updateCalendarEvent } from '../api'; // Import updateCalendarEvent function
+import { getTasks, addTask, updateTask, getCalendarEvents, addCalendarEvent, deleteCalendarEvent, updateCalendarEvent, syncDueDates } from '../api'; // Import syncDueDates function
 import './CalendarPage.css';
 
 const CalendarPage = () => {
@@ -23,29 +23,36 @@ const CalendarPage = () => {
       try {
         const tasks = await getTasks();
         setTasks(tasks);
+  
         const calendarEvents = await getCalendarEvents();
+  
+        // Format events
         const formattedEvents = calendarEvents.map((event) => {
           const task = tasks.find((task) => task.id === event.task_id);
+  
+          const isDueDate = event.due_flag === 1;
+          const titlePrefix = isDueDate ? "Due - " : "";
+  
           return {
             id: event.id.toString(),
-            title: task ? task.title : 'Unknown Task',
+            title: titlePrefix + (task ? task.title : "Unknown Task"),
             start: event.start,
             end: event.end,
             allDay: event.all_day,
             extendedProps: {
-              description: task ? task.description : '',
-              priority: task ? task.priority : 'Medium',
+              description: task ? task.description : "",
+              priority: task ? task.priority : "Medium",
             },
           };
         });
         setEvents(formattedEvents);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchData();
-  }, []);
+  }, [tasks, events]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -221,10 +228,26 @@ const CalendarPage = () => {
     }
   };
 
+  const handleSyncDueDates = async () => {
+    try {
+      await syncDueDates();
+  
+      const tasks = await getTasks();
+      setTasks(tasks);
+  
+      const calendarEvents = await getCalendarEvents();
+      
+      setEvents(calendarEvents); // <-- Don't format here, useEffect will handle it
+    } catch (error) {
+      console.error("Error syncing due dates:", error);
+    }
+  };
+
   return (
     <div className="calendar-page">
       <h2>Calendar</h2>
       <button onClick={() => setShowModal(true)}>Add Task to Calendar</button>
+      <button onClick={handleSyncDueDates}>Sync Due Dates</button>
       {showModal && (
         <div className="modal">
           <div className="modal-content">
